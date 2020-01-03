@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <list>
-#include <vector>
 
 const int red = 25;
 const int yellow = 26;
@@ -10,7 +8,7 @@ const int button = 23;
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(CONFIG_MONITOR_BAUD_115200B);
 
   pinMode(red, OUTPUT);
   pinMode(yellow, OUTPUT);
@@ -19,23 +17,33 @@ void setup()
   pinMode(button, INPUT_PULLDOWN);
 }
 
-std::list<int> leds = {red, yellow, green};
+struct Entry
+{
+  uint8_t led;
+  int time;
+};
 
-auto currentLed = leds.begin();
+auto leds = {green, yellow, red};
+
+auto runningLeds = {Entry{green, 20}, Entry{yellow, 20}, Entry{red, 20}};
+
+auto currentLed = runningLeds.begin();
 auto state = false;
 
-auto lastButtonTime = millis();
+auto lastButtonTime = 0;
 auto lastButtonValue = LOW;
 
-auto lastLedSwitchTime = millis();
+auto lastLedSwitchTime = 0;
 auto ledState = false;
+
+const auto ButtonBounceTime = 5;
 
 void loop()
 {
   auto buttonValue = digitalRead(button);
   auto currentButtonTime = millis();
   auto timeDiff = currentButtonTime - lastButtonTime;
-  if (buttonValue != lastButtonValue && timeDiff > 5)
+  if (buttonValue != lastButtonValue && timeDiff > ButtonBounceTime)
   {
     if (buttonValue == LOW)
     {
@@ -44,24 +52,39 @@ void loop()
 
     lastButtonTime = currentButtonTime;
     lastButtonValue = buttonValue;
+
+    if (!state)
+    {
+      // switch all off
+      for (auto l : leds)
+      {
+        digitalWrite(l, LOW);
+      }
+      currentLed = runningLeds.begin();
+      lastLedSwitchTime = 0;
+      ledState = false;
+    }
   }
 
   auto currentLedSwitchTime = millis();
-  if (state && (currentLedSwitchTime - lastLedSwitchTime) > 100)
+  if (state)
   {
-    ledState = !ledState;
-
-    lastLedSwitchTime = currentLedSwitchTime;
-    digitalWrite(*currentLed, digitalRead(*currentLed) == HIGH ? LOW : HIGH);
-
-    if (!ledState)
+    if (currentLedSwitchTime - lastLedSwitchTime > currentLed->time)
     {
-      currentLed++;
-      if (currentLed == leds.end())
+      ledState = !ledState;
+
+      lastLedSwitchTime = currentLedSwitchTime;
+      if (currentLed->led >= 0)
       {
-        leds.reverse();
-        currentLed = leds.begin();
+        digitalWrite(currentLed->led, digitalRead(currentLed->led) == HIGH ? LOW : HIGH);
+      }
+      if (!ledState)
+      {
         currentLed++;
+        if (currentLed == runningLeds.end())
+        {
+          currentLed = runningLeds.begin();
+        }
       }
     }
   }
