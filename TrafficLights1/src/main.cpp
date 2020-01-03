@@ -1,5 +1,4 @@
 #include <Arduino.h>
-
 #include <StateMachine.h>
 
 const int red = 25;
@@ -115,29 +114,10 @@ void setup()
   stateAttentionHalt->addTransition([]() { return true; }, stateHalt);
   stateHalt->addTransition([]() { return true; }, stateAttentionGo);
   stateAttentionGo->addTransition([]() { return true; }, stateGo);
-
-  attachInterrupt(button, []() {
-    static auto last = 0;
-
-    auto v = digitalRead(button);
-    auto current = millis();
-
-    auto diff = current - lastTime;
-    if (v != last && diff > 5)
-    {
-      Serial.printf("changed %i %s %ld\n", v, v == HIGH ? "pressed" : "released", diff);
-      lastTime = current;
-      last = v;
-    }
-  },
-                  CHANGE);
 }
 
 void loop()
 {
   machine.run();
   delay(100);
-  // while (true) {
-  //   printf("%d", digitalRead(button));
-  // }
 }

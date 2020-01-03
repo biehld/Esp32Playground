@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.env.linux": {
+        "PATH": "/home/daniel/.platformio/penv/bin:/home/daniel/.platformio/penv:/usr/local/bin:/usr/local/sbin:/usr/bin:/opt/dotnet:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/opt/dotnet:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/home/daniel/.local/bin:/home/daniel/.dotnet/tools",
+        "PLATFORMIO_CALLER": "vscode"
+    }
+}
