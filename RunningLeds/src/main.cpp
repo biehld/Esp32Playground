@@ -4,15 +4,18 @@ const int red = 25;
 const int yellow = 26;
 const int green = 27;
 
+auto leds = {green, yellow, red};
+
 const int button = 23;
 
 void setup()
 {
-  Serial.begin(CONFIG_MONITOR_BAUD_115200B);
+  Serial.begin(CONFIG_MONITOR_BAUD);
 
-  pinMode(red, OUTPUT);
-  pinMode(yellow, OUTPUT);
-  pinMode(green, OUTPUT);
+  for (auto l : leds)
+  {
+    pinMode(l, OUTPUT);
+  }
 
   pinMode(button, INPUT_PULLDOWN);
 }
@@ -23,12 +26,10 @@ struct Entry
   int time;
 };
 
-auto leds = {green, yellow, red};
-
-auto runningLeds = {Entry{green, 20}, Entry{yellow, 20}, Entry{red, 20}};
+auto runningLeds = {Entry{green, 50}, Entry{yellow, 50}, Entry{red, 50}};
 
 auto currentLed = runningLeds.begin();
-auto state = false;
+auto isRunning = false;
 
 auto lastButtonTime = 0;
 auto lastButtonValue = LOW;
@@ -47,13 +48,13 @@ void loop()
   {
     if (buttonValue == LOW)
     {
-      state = !state;
+      isRunning = !isRunning;
     }
 
     lastButtonTime = currentButtonTime;
     lastButtonValue = buttonValue;
 
-    if (!state)
+    if (!isRunning)
     {
       // switch all off
       for (auto l : leds)
@@ -67,7 +68,7 @@ void loop()
   }
 
   auto currentLedSwitchTime = millis();
-  if (state)
+  if (isRunning)
   {
     if (currentLedSwitchTime - lastLedSwitchTime > currentLed->time)
     {
