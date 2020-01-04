@@ -70,6 +70,13 @@ auto runningLeds = {
   Entry{red, 0, LOW},
 
   Entry{yellow, 100, LOW},
+
+  Entry{green, 100, HIGH},
+  Entry{green, 100, LOW},
+  Entry{yellow, 100, HIGH},
+  Entry{yellow, 100, LOW},
+  Entry{red, 100, HIGH},
+  Entry{red, 100, LOW},
 };
 
 auto currentLed = runningLeds.begin();
