@@ -21,72 +21,71 @@ void setup()
   pinMode(button, INPUT_PULLDOWN);
 }
 
-struct Entry
+struct StateEntry
 {
   int led;
   int time;
   int state;
 };
 
-auto runningLeds = {
-  Entry{green, 50, HIGH},
-  Entry{yellow, 50, HIGH},
-  Entry{red, 50, HIGH},
-  Entry{green, 50, LOW},
-  Entry{yellow, 50, LOW},
-  Entry{red, 50, LOW},
+auto runningLedsStates = {
+    StateEntry{green, 50, HIGH},
+    StateEntry{yellow, 50, HIGH},
+    StateEntry{red, 50, HIGH},
+    StateEntry{green, 50, LOW},
+    StateEntry{yellow, 50, LOW},
+    StateEntry{red, 50, LOW},
 
-  Entry{none, 50, LOW},
+    StateEntry{none, 50, LOW},
 
-  Entry{green, 50, HIGH},
-  Entry{yellow, 50, HIGH},
-  Entry{red, 50, HIGH},
-  Entry{red, 50, LOW},
-  Entry{yellow, 50, LOW},
-  Entry{green, 50, LOW},
-  
-  Entry{none, 50, LOW},
+    StateEntry{green, 50, HIGH},
+    StateEntry{yellow, 50, HIGH},
+    StateEntry{red, 50, HIGH},
+    StateEntry{red, 50, LOW},
+    StateEntry{yellow, 50, LOW},
+    StateEntry{green, 50, LOW},
 
-  Entry{yellow, 0, LOW},
-  Entry{green, 0, HIGH},  
-  Entry{red, 0, HIGH},
+    StateEntry{none, 50, LOW},
 
-  Entry{none, 100, LOW},
+    StateEntry{yellow, 0, LOW},
+    StateEntry{green, 0, HIGH},
+    StateEntry{red, 0, HIGH},
 
-  Entry{yellow, 0, HIGH},
-  Entry{green, 0, LOW},  
-  Entry{red, 0, LOW},
+    StateEntry{none, 100, LOW},
 
-  Entry{none, 100, LOW},
+    StateEntry{yellow, 0, HIGH},
+    StateEntry{green, 0, LOW},
+    StateEntry{red, 0, LOW},
 
-  Entry{yellow, 0, LOW},
-  Entry{green, 0, HIGH},  
-  Entry{red, 0, HIGH},
+    StateEntry{none, 100, LOW},
 
-  Entry{none, 100, LOW},
+    StateEntry{yellow, 0, LOW},
+    StateEntry{green, 0, HIGH},
+    StateEntry{red, 0, HIGH},
 
-  Entry{yellow, 0, HIGH},
-  Entry{green, 0, LOW},  
-  Entry{red, 0, LOW},
+    StateEntry{none, 100, LOW},
 
-  Entry{yellow, 100, LOW},
+    StateEntry{yellow, 0, HIGH},
+    StateEntry{green, 0, LOW},
+    StateEntry{red, 0, LOW},
 
-  Entry{green, 100, HIGH},
-  Entry{green, 100, LOW},
-  Entry{yellow, 100, HIGH},
-  Entry{yellow, 100, LOW},
-  Entry{red, 100, HIGH},
-  Entry{red, 100, LOW},
+    StateEntry{yellow, 100, LOW},
+
+    StateEntry{green, 100, HIGH},
+    StateEntry{green, 100, LOW},
+    StateEntry{yellow, 100, HIGH},
+    StateEntry{yellow, 100, LOW},
+    StateEntry{red, 100, HIGH},
+    StateEntry{red, 100, LOW},
 };
 
-auto currentLed = runningLeds.begin();
+auto currentLedState = runningLedsStates.begin();
 auto isRunning = false;
 
 auto lastButtonTime = 0;
 auto lastButtonValue = LOW;
 
 auto lastLedSwitchTime = 0;
-auto ledState = false;
 
 const auto ButtonBounceTime = 5;
 
@@ -112,31 +111,26 @@ void loop()
       {
         digitalWrite(l, LOW);
       }
-      currentLed = runningLeds.begin();
-      lastLedSwitchTime = 0;
-      ledState = false;
+      currentLedState = runningLedsStates.begin();
+      lastLedSwitchTime = 0;      
     }
   }
 
   auto currentLedSwitchTime = millis();
   if (isRunning)
   {
-    if (currentLedSwitchTime - lastLedSwitchTime > currentLed->time)
+    if (currentLedSwitchTime - lastLedSwitchTime > currentLedState->time)
     {
-      ledState = !ledState;
-
       lastLedSwitchTime = currentLedSwitchTime;
-      if (currentLed->led >= 0)
+      if (currentLedState->led >= 0)
       {
-        digitalWrite(currentLed->led, currentLed->state);
+        digitalWrite(currentLedState->led, currentLedState->state);
       }
-      if (!ledState)
+
+      currentLedState++;
+      if (currentLedState == runningLedsStates.end())
       {
-        currentLed++;
-        if (currentLed == runningLeds.end())
-        {
-          currentLed = runningLeds.begin();
-        }
+        currentLedState = runningLedsStates.begin();
       }
     }
   }
