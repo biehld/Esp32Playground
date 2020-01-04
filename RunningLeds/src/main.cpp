@@ -1,12 +1,13 @@
 #include <Arduino.h>
 
-const int red = 25;
-const int yellow = 26;
-const int green = 27;
+const auto none = -1;
+const auto red = 25;
+const auto yellow = 26;
+const auto green = 27;
 
 auto leds = {green, yellow, red};
 
-const int button = 23;
+const auto button = 23;
 
 void setup()
 {
@@ -22,11 +23,54 @@ void setup()
 
 struct Entry
 {
-  uint8_t led;
+  int led;
   int time;
+  int state;
 };
 
-auto runningLeds = {Entry{green, 50}, Entry{yellow, 50}, Entry{red, 50}};
+auto runningLeds = {
+  Entry{green, 50, HIGH},
+  Entry{yellow, 50, HIGH},
+  Entry{red, 50, HIGH},
+  Entry{green, 50, LOW},
+  Entry{yellow, 50, LOW},
+  Entry{red, 50, LOW},
+
+  Entry{none, 50, LOW},
+
+  Entry{green, 50, HIGH},
+  Entry{yellow, 50, HIGH},
+  Entry{red, 50, HIGH},
+  Entry{red, 50, LOW},
+  Entry{yellow, 50, LOW},
+  Entry{green, 50, LOW},
+  
+  Entry{none, 50, LOW},
+
+  Entry{yellow, 0, LOW},
+  Entry{green, 0, HIGH},  
+  Entry{red, 0, HIGH},
+
+  Entry{none, 100, LOW},
+
+  Entry{yellow, 0, HIGH},
+  Entry{green, 0, LOW},  
+  Entry{red, 0, LOW},
+
+  Entry{none, 100, LOW},
+
+  Entry{yellow, 0, LOW},
+  Entry{green, 0, HIGH},  
+  Entry{red, 0, HIGH},
+
+  Entry{none, 100, LOW},
+
+  Entry{yellow, 0, HIGH},
+  Entry{green, 0, LOW},  
+  Entry{red, 0, LOW},
+
+  Entry{yellow, 100, LOW},
+};
 
 auto currentLed = runningLeds.begin();
 auto isRunning = false;
@@ -77,7 +121,7 @@ void loop()
       lastLedSwitchTime = currentLedSwitchTime;
       if (currentLed->led >= 0)
       {
-        digitalWrite(currentLed->led, digitalRead(currentLed->led) == HIGH ? LOW : HIGH);
+        digitalWrite(currentLed->led, currentLed->state);
       }
       if (!ledState)
       {
