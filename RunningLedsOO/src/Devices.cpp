@@ -6,7 +6,7 @@
 namespace devices
 {
 
-GPIODevice::GPIODevice(std::string name, int pin) : _name(std::move(name)), _pin(pin)
+GPIODevice::GPIODevice(int pin, std::string name) : _pin(pin), _name(std::move(name))
 {
 }
 
@@ -24,7 +24,7 @@ std::string GPIODevice::name() const
     return _name;
 }
 
-OutputDevice::OutputDevice(std::string name, int pin) : GPIODevice(name, pin)
+OutputDevice::OutputDevice(int pin, std::string name) : GPIODevice(pin, name)
 {
     pinMode(pin, OUTPUT);
 }
@@ -39,7 +39,7 @@ void OutputDevice::set_value(bool v)
     digitalWrite(pin(), v ? HIGH : LOW);
 }
 
-Switch::Switch(std::string name, int pin) : OutputDevice(name, pin)
+Switch::Switch(int pin, std::string name) : OutputDevice(pin, name)
 {
 }
 
@@ -58,7 +58,7 @@ void Switch::toggle()
     set_value(!value());
 }
 
-InputDevice::InputDevice(std::string name, int pin, InputMode inputMode) : GPIODevice(name, pin), _inputMode(inputMode)
+InputDevice::InputDevice(int pin, InputMode inputMode, std::string name) : GPIODevice(pin, name), _inputMode(inputMode)
 {
     switch (inputMode)
     {
@@ -82,7 +82,7 @@ int InputDevice::value()
     return digitalRead(pin());
 }
 
-DigitalInputDevice::DigitalInputDevice(std::string name, int pin, InputMode inputMode) : InputDevice(name, pin, inputMode)
+DigitalInputDevice::DigitalInputDevice(int pin, InputMode inputMode, std::string name) : InputDevice(pin, inputMode, name)
 {
     attachInterruptArg(pin, [](void *arg) IRAM_ATTR { static_cast<DigitalInputDevice *>(arg)->on_interrupt(); }, this, CHANGE);
 }
@@ -102,7 +102,11 @@ void DigitalInputDevice::on_changed(bool newValue)
     changed(newValue);
 }
 
-Button::Button(std::string name, int pin, InputMode inputMode) : DigitalInputDevice(name, pin, inputMode)
+Button::Button(int pin, std::string name) : Button(pin, InputMode::Pulldown, name)
+{
+}
+
+Button::Button(int pin, InputMode inputMode, std::string name) : DigitalInputDevice(pin, inputMode, name)
 {
 }
 
@@ -138,7 +142,7 @@ void Button::on_released()
     released();
 }
 
-Led::Led(std::string name, int pin) : Switch(name, pin)
+Led::Led(int pin, std::string name) : Switch(pin, name)
 {
 }
 

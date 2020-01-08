@@ -11,11 +11,11 @@ namespace devices
 class GPIODevice
 {
 private:
-    std::string _name;
     int _pin;
+    std::string _name;
 
 protected:
-    GPIODevice(std::string name, int pin);
+    GPIODevice(int pin, std::string name = std::string());
 
 public:
     virtual ~GPIODevice();
@@ -27,7 +27,7 @@ public:
 class OutputDevice : public GPIODevice
 {
 public:
-    OutputDevice(std::string name, int pin);
+    OutputDevice(int pin, std::string name = std::string());
 
     bool value();
     void set_value(bool v);
@@ -36,7 +36,7 @@ public:
 class Switch : public OutputDevice
 {
 public:
-    Switch(std::string name, int pin);
+    Switch(int pin, std::string name = std::string());
 
     void on();
     void off();
@@ -56,7 +56,7 @@ private:
     InputMode _inputMode;
 
 public:
-    InputDevice(std::string name, int pin, InputMode inputMode = Normal);
+    InputDevice(int pin, InputMode inputMode = Normal, std::string name = std::string());
 
     virtual int value();
 };
@@ -69,8 +69,8 @@ private:
 protected:
     virtual void on_changed(bool newValue);
 
-public:
-    DigitalInputDevice(std::string name, int pin, InputMode inputMode = Normal);
+public:    
+    DigitalInputDevice(int pin, InputMode inputMode, std::string name = std::string());
 
     ~DigitalInputDevice() override;
 
@@ -80,10 +80,11 @@ public:
 class Button : public DigitalInputDevice
 {
 private:
-    int _lastTime = 0; 
+    int _lastTime = 0;
 
     int bounceTime = 5;
     bool _pressed = false;
+
 protected:
     void on_changed(bool newValue) override;
 
@@ -91,7 +92,8 @@ protected:
     virtual void on_released();
 
 public:
-    Button(std::string name, int pin, InputMode inputMode = Normal);
+    Button(int pin, std::string name = std::string());
+    Button(int pin, InputMode inputMode, std::string name = std::string());
 
     bool is_pressed();
 
@@ -99,14 +101,14 @@ public:
     sigslot::signal<> released;
 };
 
-
-class Led: public Switch {
+class Led : public Switch
+{
 private:
 public:
-    Led(std::string name, int pin);
+    Led(int pin, std::string name = std::string());
 
-    void blink(int time=100);
-    void blinkAsync(int time=100);
+    void blink(int time = 100);
+    void blinkAsync(int time = 100);
     void blink(int on_time, int off_time);
     void blinkAsync(int on_time, int off_time);
 };

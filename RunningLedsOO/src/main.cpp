@@ -5,26 +5,26 @@
 #include "Devices.h"
 #include <functional>
 
-devices::Led red("red", 25);
-devices::Led yellow("yellow", 26);
-devices::Led green("green", 27);
+devices::Led red(25);
+devices::Led yellow(26);
+devices::Led green(27);
 
 auto leds = {&green, &yellow, &red};
 
-devices::Button buttonRed("button", 21, devices::Pulldown);
-devices::Button buttonYellow("button", 23, devices::Pulldown);
-devices::Button buttonGreen("button", 19, devices::Pulldown);
+devices::Button buttonRed(21);
+devices::Button buttonYellow(23);
+devices::Button buttonGreen(19);
 
 bool running = true;
 bool running1 = true;
 
 void setup()
 {
-  buttonRed.released += []() { red.blinkAsync(1000);};
+  buttonRed.released += []() { red.blinkAsync(1000); };
   buttonYellow.released += []() { yellow.toggle(); };
   buttonGreen.pressed += []() { green.toggle(); };
 
-  Serial.begin(CONFIG_MONITOR_BAUD);  
+  Serial.begin(CONFIG_MONITOR_BAUD);
 }
 
 void loop()
