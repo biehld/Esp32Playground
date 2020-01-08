@@ -6,11 +6,7 @@
 namespace devices
 {
 
-GPIODevice::GPIODevice(int pin, std::string name) : _pin(pin), _name(std::move(name))
-{
-}
-
-GPIODevice::~GPIODevice()
+GPIODevice::GPIODevice(int pin, std::string name) : _pin(pin), _name(name)
 {
 }
 
@@ -84,17 +80,12 @@ int InputDevice::value()
 
 DigitalInputDevice::DigitalInputDevice(int pin, InputMode inputMode, std::string name) : InputDevice(pin, inputMode, name)
 {
-    attachInterruptArg(pin, [](void *arg) IRAM_ATTR { static_cast<DigitalInputDevice *>(arg)->on_interrupt(); }, this, CHANGE);
+    attachInterruptArg(pin, [](void *arg) IRAM_ATTR { auto d = static_cast<DigitalInputDevice *>(arg); d->on_changed( d->value()); }, this, CHANGE);
 }
 
 DigitalInputDevice::~DigitalInputDevice()
-{
+{    
     detachInterrupt(pin());
-}
-
-IRAM_ATTR void DigitalInputDevice::on_interrupt()
-{
-    on_changed(value());
 }
 
 void DigitalInputDevice::on_changed(bool newValue)
@@ -118,9 +109,13 @@ void Button::on_changed(bool newValue)
     if (newValue != _pressed && currentTime - _lastTime > bounceTime)
     {
         if (newValue)
+        {
             on_pressed();
+        }
         else
+        {
             on_released();
+        }
 
         _pressed = newValue;
         _lastTime = currentTime;
@@ -177,14 +172,14 @@ void task_blink_led(void *params)
 
     blinkParams->led->blink(blinkParams->on_time, blinkParams->off_time);
 
+    delete blinkParams;
+
     vTaskDelete(nullptr);
 }
 
 void Led::blinkAsync(int on_time, int off_time)
 {
-    auto params = new TaskBlinkParams{this, on_time, off_time};
-
-    xTaskCreate(&task_blink_led, "blink", 10000, params, 0, nullptr);
+    xTaskCreate(&task_blink_led, "blink", 10000, new TaskBlinkParams{this, on_time, off_time}, 0, nullptr);
 }
 
 } // namespace devices

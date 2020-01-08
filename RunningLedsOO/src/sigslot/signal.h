@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SIGSLOT_SIGNAL_H
+#define SIGSLOT_SIGNAL_H
+
 #include <atomic>
 #include <cassert>
 #include <memory>
@@ -1041,3 +1043,5 @@ template <typename... T>
 using signal = signal_base<std::mutex, T...>;
 
 } // namespace sigslot
+
+#endif

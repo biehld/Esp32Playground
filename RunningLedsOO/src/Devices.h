@@ -1,5 +1,5 @@
-#ifndef DEVICES_H
-#define DEVICES_H
+#ifndef _DEVICES_H
+#define _DEVICES_H
 
 #include <functional>
 #include <sigslot/signal.h>
@@ -18,7 +18,7 @@ protected:
     GPIODevice(int pin, std::string name = std::string());
 
 public:
-    virtual ~GPIODevice();
+    virtual ~GPIODevice() = default;
 
     int pin() const;
     std::string name() const;
@@ -63,9 +63,6 @@ public:
 
 class DigitalInputDevice : public InputDevice
 {
-private:
-    void on_interrupt();
-
 protected:
     virtual void on_changed(bool newValue);
 
@@ -74,7 +71,7 @@ public:
 
     ~DigitalInputDevice() override;
 
-    sigslot::signal<bool> changed;
+    sigslot::signal<bool> changed {};
 };
 
 class Button : public DigitalInputDevice
@@ -97,8 +94,8 @@ public:
 
     bool is_pressed();
 
-    sigslot::signal<> pressed;
-    sigslot::signal<> released;
+    sigslot::signal<> pressed {};
+    sigslot::signal<> released {};
 };
 
 class Led : public Switch
