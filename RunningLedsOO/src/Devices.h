@@ -2,107 +2,128 @@
 #define _DEVICES_H
 
 #include <functional>
+#include <mutex>
 #include <sigslot/signal.h>
 #include <string>
 
-namespace devices
-{
+namespace devices {
 
-class GPIODevice
-{
+struct GPIODevicePrivate;
+
+class GPIODevice {
 private:
     int _pin;
+    int _mode;
     std::string _name;
 
+    GPIODevicePrivate *_privateImpl;
+
 protected:
-    GPIODevice(int pin, std::string name = std::string());
+    GPIODevice(int pin, int mode, std::string name = std::string());
+
+    virtual void on_changed(int newValue);
 
 public:
-    virtual ~GPIODevice() = default;
+    virtual ~GPIODevice();
 
     int pin() const;
+    int mode() const;
     std::string name() const;
+
+    virtual int value() = 0;
+
+    sigslot::signal<GPIODevice *, int> changed{};
 };
 
-class OutputDevice : public GPIODevice
-{
+class OutputDevice : public GPIODevice {
 public:
     OutputDevice(int pin, std::string name = std::string());
 
-    bool value();
-    void set_value(bool v);
+    int value() override;
+    virtual void set_value(int v) = 0;
 };
 
-class Switch : public OutputDevice
-{
+class DigitalOutputDevice : public OutputDevice {
 public:
-    Switch(int pin, std::string name = std::string());
+    DigitalOutputDevice(int pin, int initialValue, std::string name = std::string());
+
+    void set_value(int v) override;
+
+    bool is_on();
+    bool is_off();
 
     void on();
     void off();
     void toggle();
 };
 
-enum InputMode
-{
+enum InputMode {
     Normal,
     Pulldown,
     Pullup
 };
 
-class InputDevice : public GPIODevice
-{
+class InputDevice : public GPIODevice {
 private:
     InputMode _inputMode;
 
 public:
     InputDevice(int pin, InputMode inputMode = Normal, std::string name = std::string());
-
-    virtual int value();
 };
 
-class DigitalInputDevice : public InputDevice
-{
-protected:
-    virtual void on_changed(bool newValue);
-
-public:    
+class DigitalInputDevice : public InputDevice {
+public:
     DigitalInputDevice(int pin, InputMode inputMode, std::string name = std::string());
 
-    ~DigitalInputDevice() override;
-
-    sigslot::signal<bool> changed {};
+    int value() override;
 };
 
-class Button : public DigitalInputDevice
-{
+struct ButtonPrivate;
+
+class Button : public DigitalInputDevice {
 private:
     int _lastTime = 0;
 
-    int bounceTime = 5;
+    const int bounceTime = 5;
+    
+    const int heldTickTime = 50;
+    const int holdTime = 500;
+
     bool _pressed = false;
 
+    ButtonPrivate *_privateImpl;
+    friend ButtonPrivate;
 protected:
-    void on_changed(bool newValue) override;
+    void on_changed(int newValue) override;
 
     virtual void on_pressed();
     virtual void on_released();
+    virtual void on_held();
 
 public:
     Button(int pin, std::string name = std::string());
     Button(int pin, InputMode inputMode, std::string name = std::string());
+    ~Button() override;
 
     bool is_pressed();
+    bool is_released();
 
-    sigslot::signal<> pressed {};
-    sigslot::signal<> released {};
+    sigslot::signal<GPIODevice *> pressed{};
+    sigslot::signal<GPIODevice *> released{};
+    sigslot::signal<GPIODevice *> held{};
 };
 
-class Led : public Switch
-{
+struct LedPrivate;
+
+class Led : public DigitalOutputDevice {
 private:
+    LedPrivate *_privateImpl;
+
 public:
     Led(int pin, std::string name = std::string());
+    Led(int pin, int initialValue, std::string name = std::string());
+
+    ~Led() override;
 
     void blink(int time = 100);
     void blinkAsync(int time = 100);

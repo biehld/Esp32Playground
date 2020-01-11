@@ -1,38 +1,53 @@
+#include <functional>
+#include <iostream>
 #include <vector>
 
 #include <Arduino.h>
 
 #include "Devices.h"
 
-devices::Led red(25);
-devices::Led yellow(26);
-devices::Led green(27);
+using devices::Button;
+using devices::GPIODevice;
+using devices::Led;
 
-std::vector<devices::Led *> leds = {&green, &yellow, &red};
+Led ledRed(25, "red");
+Led ledYellow(26, "yellow");
+Led ledGreen(27, "green");
 
-devices::Button buttonRed(21);
-devices::Button buttonYellow(23);
-devices::Button buttonGreen(19);
+std::vector<devices::Led *> leds = {&ledGreen, &ledYellow, &ledRed};
+
+Button buttonRed(21, "buttonRed");
+Button buttonYellow(23, "buttonYellow");
+Button buttonGreen(19, "buttonGreen");
 
 bool running = true;
-bool running1 = true;
 
-void setup()
-{
-  buttonRed.released += []() { running = !running; };  
-
-  Serial.begin(CONFIG_MONITOR_BAUD);
-
-  srand(time(nullptr));
+void on_led_changed(devices::GPIODevice *sender, int newValue) {
+    //Serial.printf("led %s is switched to %d\n", sender->name().c_str(), newValue);
 }
 
-void loop()
-{
-  if (running)
-  {
-    leds[rand() % leds.size()]->blink(rand() % 500, rand() % 500);
-  }
-  for (auto i=0;i<leds.size();i++) {
-    leds[i]->blink();
-  }
+int blinkTime = 25;
+
+void setup() {  
+    Serial.begin(CONFIG_MONITOR_BAUD);
+
+    ledRed.changed += &on_led_changed;
+    ledYellow.changed += &on_led_changed;
+    ledGreen.changed += &on_led_changed;
+
+    auto decrement = [](GPIODevice *sender) { blinkTime--; Serial.printf("blinkTime=%d\n", blinkTime); };
+    //buttonRed.released += [](GPIODevice *sender) { ledRed.toggle(); };
+    buttonRed.pressed += decrement;
+    buttonRed.held += decrement;
+
+    buttonYellow.pressed += [](GPIODevice *sender) { ledYellow.blink(1000); };
+
+    auto increment = [](GPIODevice *sender) { blinkTime++; Serial.printf("blinkTime=%d\n", blinkTime); };
+
+    buttonGreen.pressed += increment;
+    buttonGreen.held += increment;
+}
+
+void loop() {
+    ledYellow.blink(blinkTime);    
 }
