@@ -10,19 +10,21 @@ namespace devices {
 
 class xSemaphoreLockGuard {
 public:
-    explicit xSemaphoreLockGuard(SemaphoreHandle_t &semHandle, TickType_t blockTime = portMAX_DELAY) : _semHandle(semHandle) {
-        xSemaphoreTake(_semHandle, portMAX_DELAY);
+    explicit xSemaphoreLockGuard(const SemaphoreHandle_t &semHandle, TickType_t blockTime = portMAX_DELAY) : _semHandle(semHandle) {
+        xSemaphoreTake(_semHandle, blockTime);
     }
 
-    xSemaphoreLockGuard(const xSemaphoreLockGuard &other) = delete;
-    xSemaphoreLockGuard(xSemaphoreLockGuard &&other) = delete;
+    xSemaphoreLockGuard(const xSemaphoreLockGuard &) = delete;
+    xSemaphoreLockGuard(xSemaphoreLockGuard &&) = delete;
+    xSemaphoreLockGuard &operator=(const xSemaphoreLockGuard &) = delete;
+    xSemaphoreLockGuard &operator=(xSemaphoreLockGuard &&) = delete;
 
     ~xSemaphoreLockGuard() {
         xSemaphoreGive(_semHandle);
     }
 
 private:
-    SemaphoreHandle_t &_semHandle;
+    SemaphoreHandle_t _semHandle;
 };
 
 struct GPIODevicePrivate {
@@ -130,41 +132,41 @@ int DigitalInputDevice::value() {
 
 struct ButtonPrivate {
 private:
-    hw_timer_t *timer = {};
     Button *_button = {};
-    portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-    Ticker *ticker{};
-    unsigned long timerStartTime;
+    Ticker ticker{};
+    uint64_t timerStartTime = 0;
+    bool timerStarted = false;
 
 public:
-    ButtonPrivate(Button *button) : _button(button) {
+    explicit ButtonPrivate(Button *button) : _button(button) {
     }
+    ButtonPrivate(const ButtonPrivate &) = delete;
+    ButtonPrivate(ButtonPrivate &&) = delete;
+    ButtonPrivate &operator=(const ButtonPrivate &) = delete;
+    ButtonPrivate &operator=(ButtonPrivate &&) = delete;
 
     ~ButtonPrivate() {
         timerStop();
     }
-    std::function<void(void)> func;
 
     void timerStart() {
-
         timerStartTime = millis() + _button->holdTime;
 
-        assert(ticker == nullptr);
+        assert(timerStarted == false);
 
-        ticker = new Ticker();
-        ticker->attach_ms<ButtonPrivate *>(_button->heldTickTime,
-                                           [](ButtonPrivate *b) IRAM_ATTR{
-                                               if (millis() > b->timerStartTime) {
-                                                   b->_button->on_held();
-                                               }
-                                           },
-                                           this);
+        ticker.attach_ms<ButtonPrivate *>(_button->heldTickTime,
+                                          [](ButtonPrivate *b) {
+                                              if (millis() > b->timerStartTime) {
+                                                  b->_button->on_held();
+                                              }
+                                          },
+                                          this);
+        timerStarted = true;
     }
 
     void timerStop() {
-        ticker->detach();
-        delete ticker;
-        ticker = nullptr;
+        timerStarted = false;
+        ticker.detach();
     }
 };
 
@@ -182,15 +184,18 @@ void Button::on_changed(int newValue) {
     DigitalInputDevice::on_changed(newValue);
 
     auto currentTime = millis();
-    if ((newValue == HIGH) != _pressed && currentTime - _lastTime > bounceTime) {
-        if (newValue == HIGH) {
+    auto _newPressed = newValue == HIGH;
+
+    if (_newPressed != _pressed && currentTime - _lastTime > bounceTime) {
+
+        _pressed = _newPressed;
+        _lastTime = currentTime;
+
+        if (_pressed) {
             on_pressed();
         } else {
             on_released();
         }
-
-        _pressed = newValue == HIGH;
-        _lastTime = currentTime;
     }
 }
 
@@ -239,12 +244,14 @@ void Led::blink(int on_time, int off_time) {
     xSemaphoreLockGuard lock_guard(_privateImpl->blinkMutex);
 
     on();
-    if (on_time > 0)
+    if (on_time > 0) {
         delay(on_time);
+    }
 
     off();
-    if (off_time > 0)
+    if (off_time > 0) {
         delay(off_time);
+    }
 }
 
 void Led::blinkAsync(int time) {

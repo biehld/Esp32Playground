@@ -49,12 +49,12 @@ public:
 
     void set_value(int v) override;
 
-    bool is_on();
-    bool is_off();
+    virtual bool is_on();
+    virtual bool is_off();
 
-    void on();
-    void off();
-    void toggle();
+    virtual void on();
+    virtual void off();
+    virtual void toggle();
 };
 
 enum InputMode {
